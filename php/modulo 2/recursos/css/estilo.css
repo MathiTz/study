@@ -78,6 +78,8 @@ body {
   flex-basis: 32%;
   margin-bottom: 20px;
   border-radius: 5px;
+  height: 350px;
+  overflow-y: scroll;
 }
 
 .modulo > h3 {
