@@ -1,4 +1,6 @@
 <nav class="modulos">
+  <?php require_once('menus/db.php'); ?>
+  <?php require_once('menus/formulario.php'); ?>
   <?php require_once('menus/api.php'); ?>
   <?php require_once('menus/sessao.php'); ?>
   <?php require_once('menus/trat_erro.php'); ?>

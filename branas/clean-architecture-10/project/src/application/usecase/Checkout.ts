@@ -1,29 +1,26 @@
-import CouponRepository from "../../CouponRepository";
-import CurrencyGateway from "../../CurrencyGateway";
-import ProductRepository from "../../ProductRepository";
+import CouponRepository from '../../CouponRepository';
+import CurrencyGateway from '../../CurrencyGateway';
+import ProductRepository from '../../ProductRepository';
 
-import CouponRepositoryDatabase from "../../CouponRepositoryDatabase";
-import ProductRepositoryDatabase from "../../ProductRepositoryDatabase";
-import CurrencyGatewayHttp from "../../CurrencyGatewayHttp";
+import CurrencyGatewayHttp from '../../CurrencyGatewayHttp';
 
-import OrderRepository from "../../OrderRepositoy";
-import OrderRepositoryDatabase from "../../OrderRepositoryDatabase";
-import Order from "../../domain/entity/Order";
-import CurrencyTable from "../../domain/entity/CurrentyTable";
-import FreightCalculator from "../../domain/entity/FreightCalculator";
+import OrderRepository from '../../OrderRepositoy';
+import Order from '../../domain/entity/Order';
+import CurrencyTable from '../../domain/entity/CurrentyTable';
+import FreightCalculator from '../../domain/entity/FreightCalculator';
 
 export default class Checkout {
   constructor(
     readonly currencyGateway: CurrencyGateway = new CurrencyGatewayHttp(),
-    readonly productRepository: ProductRepository = new ProductRepositoryDatabase(),
-    readonly couponRepository: CouponRepository = new CouponRepositoryDatabase(),
-    readonly orderRepository: OrderRepository = new OrderRepositoryDatabase()
+    readonly productRepository: ProductRepository,
+    readonly couponRepository: CouponRepository,
+    readonly orderRepository: OrderRepository
   ) {}
 
   async execute(input: Input): Promise<Output> {
     const currencies = await this.currencyGateway.getCurrencies();
     const currencyTable = new CurrencyTable();
-    currencyTable.addCurrency("USD", currencies.usd);
+    currencyTable.addCurrency('USD', currencies.usd);
     const sequence = await this.orderRepository.count();
 
     const order = new Order(
@@ -43,8 +40,8 @@ export default class Checkout {
         const product = await this.productRepository.getProduct(item.idProduct);
 
         order.addItem(product, item.quantity);
-        const itemFreight = FreightCalculator.calculate(product);
-        freight += Math.max(itemFreight, 10) * item.quantity;
+        const itemFreight = FreightCalculator.calculate(product, item.quantity);
+        freight += itemFreight;
       }
     }
     if (input.from && input.to) {

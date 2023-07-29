@@ -1,29 +1,27 @@
-import Item from "./domain/entity/Item";
-import Order from "./domain/entity/Order";
-import OrderRepository from "./OrderRepositoy";
-import pgp from "pg-promise";
+import Connection from './Connection';
+import Item from './domain/entity/Item';
+import Order from './domain/entity/Order';
+import OrderRepository from './OrderRepositoy';
 
 export default class OrderRepositoryDatabase implements OrderRepository {
+  constructor(readonly connection: Connection) {}
+
   async save(order: Order): Promise<void> {
-    const connection = pgp()("postgres://matheusalves:@localhost:5432/app");
-    await connection.query(
-      "insert into cccat10.order (id_order, cpf, code, total, freight) values ($1, $2, $3, $4, $5)",
+    await this.connection.query(
+      'insert into cccat10.order (id_order, cpf, code, total, freight) values ($1, $2, $3, $4, $5)',
       [order.idOrder, order.cpf, order.code, order.getTotal(), order.freight]
     );
     for (const item of order.items) {
-      await connection.query(
-        "insert into cccat10.item (id_order, id_product, price, quantity) values ($1, $2, $3, $4)",
+      await this.connection.query(
+        'insert into cccat10.item (id_order, id_product, price, quantity) values ($1, $2, $3, $4)',
         [order.idOrder, item.idProduct, item.price, item.quantity]
       );
     }
-
-    await connection.$pool.end();
   }
 
   async getById(id: string): Promise<Order> {
-    const connection = pgp()("postgres://matheusalves:@localhost:5432/app");
-    const [orderData] = await connection.query(
-      "select * from cccat10.order where id_order = $1",
+    const [orderData] = await this.connection.query(
+      'select * from cccat10.order where id_order = $1',
       [id]
     );
     const order = new Order(
@@ -33,8 +31,8 @@ export default class OrderRepositoryDatabase implements OrderRepository {
       1,
       new Date()
     );
-    const itemsData = await connection.query(
-      "select * from cccat10.item where id_order = $1",
+    const itemsData = await this.connection.query(
+      'select * from cccat10.item where id_order = $1',
       [id]
     );
     for (const itemData of itemsData) {
@@ -43,24 +41,20 @@ export default class OrderRepositoryDatabase implements OrderRepository {
           itemData.id_product,
           parseFloat(itemData.price),
           itemData.quantity,
-          "BRL"
+          'BRL'
         )
       );
     }
-    await connection.$pool.end();
 
     return order;
   }
 
   async count(): Promise<number> {
-    const connection = pgp()("postgres://matheusalves:@localhost:5432/app");
-
-    const [options] = await connection.query(
-      "select count(*) from cccat10.order",
+    const [options] = await this.connection.query(
+      'select count(*) from cccat10.order',
       []
     );
 
-    await connection.$pool.end();
     return parseInt(options.count);
   }
 }

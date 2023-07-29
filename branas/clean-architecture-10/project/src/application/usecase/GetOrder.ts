@@ -1,10 +1,7 @@
-import OrderRepositoryDatabase from "../../OrderRepositoryDatabase";
-import OrderRepository from "../../OrderRepositoy";
+import OrderRepository from '../../OrderRepositoy';
 
 export default class GerOrder {
-  constructor(
-    readonly orderRepository: OrderRepository = new OrderRepositoryDatabase()
-  ) {}
+  constructor(readonly orderRepository: OrderRepository) {}
 
   async execute(id: string): Promise<Output> {
     const order = await this.orderRepository.getById(id);

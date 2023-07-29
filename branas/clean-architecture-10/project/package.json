@@ -17,5 +17,11 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.17"
+  },
+  "scripts": {
+    "test": "jest",
+    "start": "npx nodemon src/main_api.ts",
+    "start:currency": "npx nodemon src/api_currency.ts",
+    "cli": "npx ts-node src/cli.ts"
   }
 }

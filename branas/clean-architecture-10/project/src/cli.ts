@@ -1,24 +1,38 @@
-import pgp from "pg-promise";
-import Checkout from "./application/usecase/Checkout";
+import CouponRepositoryDatabase from './CouponRepositoryDatabase';
+import CurrencyGatewayHttp from './CurrencyGatewayHttp';
+import OrderRepositoryDatabase from './OrderRepositoryDatabase';
+import PgPromise from './PgPromiseAdapter';
+import ProductRepositoryDatabase from './ProductRepositoryDatabase';
+import Checkout from './application/usecase/Checkout';
 
-const input: Input = { cpf: "", items: [] };
+const input: Input = { cpf: '', items: [] };
 
-process.stdin.on("data", async function (chunk) {
-  const command = chunk.toString().replace(/\n/g, "");
+process.stdin.on('data', async function (chunk) {
+  const command = chunk.toString().replace(/\n/g, '');
 
-  if (command.startsWith("set-cpf")) {
-    input.cpf = command.replace("set-cpf ", "");
+  if (command.startsWith('set-cpf')) {
+    input.cpf = command.replace('set-cpf ', '');
   }
-  if (command.startsWith("add-item")) {
-    const [idProduct, quantity] = command.replace("add-item ", "").split(" ");
+  if (command.startsWith('add-item')) {
+    const [idProduct, quantity] = command.replace('add-item ', '').split(' ');
     input.items.push({
       idProduct: parseInt(idProduct),
       quantity: parseInt(quantity),
     });
   }
-  if (command.startsWith("checkout")) {
+  if (command.startsWith('checkout')) {
     try {
-      const checkout = new Checkout();
+      const connection = new PgPromise();
+      const currencyGateway = new CurrencyGatewayHttp();
+      const productRepository = new ProductRepositoryDatabase(connection);
+      const couponRepository = new CouponRepositoryDatabase(connection);
+      const orderRepository = new OrderRepositoryDatabase(connection);
+      const checkout = new Checkout(
+        currencyGateway,
+        productRepository,
+        couponRepository,
+        orderRepository
+      );
       const output = await checkout.execute(input);
       console.log(output);
     } catch (e: any) {

@@ -1,15 +1,15 @@
-import pgp from "pg-promise";
-import CouponRepository from "./CouponRepository";
-import Coupon from "./domain/entity/Coupon";
+import CouponRepository from './CouponRepository';
+import Coupon from './domain/entity/Coupon';
+import Connection from './Connection';
 
 export default class CouponRepositoryDatabase implements CouponRepository {
+  constructor(readonly connection: Connection) {}
+
   async getCoupon(code: string): Promise<Coupon> {
-    const connection = pgp()("postgres://matheusalves:@localhost:5432/app");
-    const [couponData] = await connection.query(
-      "SELECT * FROM cccat10.coupon where code = $1",
+    const [couponData] = await this.connection.query(
+      'SELECT * FROM cccat10.coupon where code = $1',
       [code]
     );
-    await connection.$pool.end();
     return new Coupon(
       couponData.code,
       parseFloat(couponData.percentage),
