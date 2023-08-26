@@ -8,13 +8,6 @@ const products: Ref<Product[]> = ref([]);
 const order = ref(new Order('407.302.170-27'));
 const output: any = ref({});
 
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat('en-us', {
-    currency: 'USD',
-    style: 'currency',
-  }).format(amount);
-}
-
 const checkoutGateway = inject('checkoutGateway') as CheckoutGatewayHttp;
 
 async function checkout(order: any) {
@@ -31,7 +24,7 @@ onMounted(async () => {
     <div class="title-name">Checkout</div>
     <div class="product" v-for="product in products" :key="product.idProduct">
       <div class="product-description">{{ product.description }}</div>
-      <div class="product-price">{{ formatMoney(product.price) }}</div>
+      <div class="product-price">{{ product.getFormattedPrice() }}</div>
       <button class="product-add" @click="order.addItem(product)">Add</button>
     </div>
     <div>
