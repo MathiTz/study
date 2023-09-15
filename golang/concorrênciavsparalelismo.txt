@@ -1,0 +1,13 @@
+Concorrência vs Paralelismo
+
+Go é uma linguagem concorrente, mas não paralela.
+
+O que isso significa? Significa que Go permite que você escreva programas que executam várias tarefas simultaneamente, mas não necessariamente em paralelo.
+A concorrência é uma propriedade do programa, enquanto a paralelismo é uma propriedade do sistema em que o programa é executado.
+
+Concorrência - intercalação de duas ou mais tarefas para que pareçam ser executadas simultaneamente.
+
+Concorrência viabiliza paralelismo
+
+É possível que a concorrência seja melhor que o paralelismo!
+Paralelismo exige mais recursos do sistema, enquanto a concorrência não.
