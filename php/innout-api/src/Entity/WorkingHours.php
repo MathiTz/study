@@ -21,6 +21,9 @@ class WorkingHours
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $work_date = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $worked_time = null;
+
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $time1 = null;
 
@@ -32,9 +35,6 @@ class WorkingHours
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $time4 = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $worked_time = null;
 
     public function getId(): ?int
     {
@@ -61,6 +61,18 @@ class WorkingHours
     public function setWorkDate(\DateTimeInterface $work_date): static
     {
         $this->work_date = $work_date;
+
+        return $this;
+    }
+
+    public function getWorkedTime(): ?int
+    {
+        return $this->worked_time;
+    }
+
+    public function setWorkedTime(?int $worked_time): static
+    {
+        $this->worked_time = $worked_time;
 
         return $this;
     }
@@ -109,18 +121,6 @@ class WorkingHours
     public function setTime4(?\DateTimeInterface $time4): static
     {
         $this->time4 = $time4;
-
-        return $this;
-    }
-
-    public function getWorkedTime(): ?int
-    {
-        return $this->worked_time;
-    }
-
-    public function setWorkedTime(?int $worked_time): static
-    {
-        $this->worked_time = $worked_time;
 
         return $this;
     }
