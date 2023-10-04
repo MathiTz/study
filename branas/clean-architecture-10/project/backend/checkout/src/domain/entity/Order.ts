@@ -1,9 +1,9 @@
-import Coupon from './Coupon';
 import Cpf from './Cpf';
 import CurrencyTable from './CurrencyTable';
 import Item from './Item';
 import Product from './Product';
-import crypto from 'node:crypto';
+import crypto from 'crypto';
+import Coupon from './Coupon';
 
 export default class Order {
   readonly items: Item[];
@@ -28,7 +28,7 @@ export default class Order {
   addItem(product: Product, quantity: number) {
     if (quantity <= 0) throw new Error('Invalid quantity');
     if (this.items.some((item: Item) => item.idProduct === product.idProduct))
-      throw new Error('Duplicated products');
+      throw new Error('Duplicated item');
     this.items.push(
       new Item(product.idProduct, product.price, quantity, product.currency)
     );
@@ -51,7 +51,7 @@ export default class Order {
         this.currencyTable.getCurrency(item.currency);
     }
     if (this.coupon) {
-      total -= this.coupon?.calculateDiscount(total);
+      total -= this.coupon.calculateDiscount(total);
     }
     total += this.freight;
     return total;

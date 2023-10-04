@@ -3,129 +3,149 @@
 namespace App\Entity;
 
 use App\Repository\UsersRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UsersRepository::class)]
 class Users
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+  #[ORM\Id]
+  #[ORM\GeneratedValue]
+  #[ORM\Column]
+  private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $name = null;
+  #[ORM\Column(length: 255)]
+  private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $email = null;
+  #[ORM\Column(length: 255)]
+  private ?string $email = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $start_date = null;
+  #[ORM\Column(type: Types::DATE_MUTABLE)]
+  private ?\DateTimeInterface $start_date = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $end_date = null;
+  #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+  private ?\DateTimeInterface $end_date = null;
 
-    #[ORM\Column]
-    private ?bool $is_admin = null;
+  #[ORM\Column]
+  private ?bool $is_admin = null;
 
-    #[ORM\OneToOne(mappedBy: 'user_id', cascade: ['persist', 'remove'])]
-    private ?WorkingHours $workingHours = null;
+  #[ORM\Column(length: 255)]
+  private ?string $password = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $password = null;
+  #[ORM\OneToMany(mappedBy: 'user_id', targetEntity: WorkingHours::class)]
+  private Collection $workingHours;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+  public function __construct()
+  {
+      $this->workingHours = new ArrayCollection();
+  }
 
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
+  public function getId(): ?int
+  {
+    return $this->id;
+  }
 
-    public function setName(string $name): static
-    {
-        $this->name = $name;
+  public function getName(): ?string
+  {
+    return $this->name;
+  }
 
-        return $this;
-    }
+  public function setName(string $name): static
+  {
+    $this->name = $name;
 
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
+    return $this;
+  }
 
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
+  public function getEmail(): ?string
+  {
+    return $this->email;
+  }
 
-        return $this;
-    }
+  public function setEmail(string $email): static
+  {
+    $this->email = $email;
 
-    public function getStartDate(): ?\DateTimeInterface
-    {
-        return $this->start_date;
-    }
+    return $this;
+  }
 
-    public function setStartDate(\DateTimeInterface $start_date): static
-    {
-        $this->start_date = $start_date;
+  public function getStartDate(): ?\DateTimeInterface
+  {
+    return $this->start_date;
+  }
 
-        return $this;
-    }
+  public function setStartDate(\DateTimeInterface $start_date): static
+  {
+    $this->start_date = $start_date;
 
-    public function getEndDate(): ?\DateTimeInterface
-    {
-        return $this->end_date;
-    }
+    return $this;
+  }
 
-    public function setEndDate(?\DateTimeInterface $end_date): static
-    {
-        $this->end_date = $end_date;
+  public function getEndDate(): ?\DateTimeInterface
+  {
+    return $this->end_date;
+  }
 
-        return $this;
-    }
+  public function setEndDate(?\DateTimeInterface $end_date): static
+  {
+    $this->end_date = $end_date;
 
-    public function isIsAdmin(): ?bool
-    {
-        return $this->is_admin;
-    }
+    return $this;
+  }
 
-    public function setIsAdmin(bool $is_admin): static
-    {
-        $this->is_admin = $is_admin;
+  public function isIsAdmin(): ?bool
+  {
+    return $this->is_admin;
+  }
 
-        return $this;
-    }
+  public function setIsAdmin(bool $is_admin): static
+  {
+    $this->is_admin = $is_admin;
 
-    public function getWorkingHours(): ?WorkingHours
-    {
-        return $this->workingHours;
-    }
+    return $this;
+  }
 
-    public function setWorkingHours(WorkingHours $workingHours): static
-    {
-        // set the owning side of the relation if necessary
-        if ($workingHours->getUserId() !== $this) {
-            $workingHours->setUserId($this);
-        }
+  public function getPassword(): ?string
+  {
+    return $this->password;
+  }
 
-        $this->workingHours = $workingHours;
+  public function setPassword(string $password): static
+  {
+    $this->password = $password;
 
-        return $this;
-    }
+    return $this;
+  }
 
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
+  /**
+   * @return Collection<int, WorkingHours>
+   */
+  public function getWorkingHours(): Collection
+  {
+      return $this->workingHours;
+  }
 
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
+  public function addWorkingHour(WorkingHours $workingHour): static
+  {
+      if (!$this->workingHours->contains($workingHour)) {
+          $this->workingHours->add($workingHour);
+          $workingHour->setUserId($this);
+      }
 
-        return $this;
-    }
+      return $this;
+  }
+
+  public function removeWorkingHour(WorkingHours $workingHour): static
+  {
+      if ($this->workingHours->removeElement($workingHour)) {
+          // set the owning side to null (unless already changed)
+          if ($workingHour->getUserId() === $this) {
+              $workingHour->setUserId(null);
+          }
+      }
+
+      return $this;
+  }
 }

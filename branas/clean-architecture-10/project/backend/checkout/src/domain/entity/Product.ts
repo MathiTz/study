@@ -10,7 +10,7 @@ export default class Product {
     readonly currency: string
   ) {
     if (this.width < 0 || this.height < 0 || this.length < 0 || this.weight < 0)
-      throw new Error("Invalid dimension");
+      throw new Error('Invalid dimension');
   }
 
   getVolume() {

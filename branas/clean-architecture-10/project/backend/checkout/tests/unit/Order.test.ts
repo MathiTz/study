@@ -34,7 +34,7 @@ test('Não pode adicionar item duplicado', async function () {
 
   expect(() =>
     order.addItem(new Product(1, 'A', 1000, 100, 30, 10, 3, 'BRL'), 1)
-  ).toThrow(new Error('Duplicated products'));
+  ).toThrow(new Error('Duplicated item'));
 });
 
 test('Não pode adicionar item com quantidade menor ou igual a 0', async function () {

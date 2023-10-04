@@ -21,7 +21,7 @@ test('Deve testar a tela de checkout', async function () {
         new Product(3, 'C', 30),
       ];
     },
-    async checkout(order: Order): Promise<any> {
+    async checkout(_order: Order): Promise<any> {
       return {
         total: 6090,
         freight: 280,
