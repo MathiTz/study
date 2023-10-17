@@ -137,8 +137,8 @@ test('Deve criar um pedido com 1 produto calculando o frete', async function () 
     to: '88015600',
   };
   const output = await checkout.execute(input);
-  expect(output.freight).toBe(90);
-  expect(output.total).toBe(3090);
+  expect(output.freight).toBe(67.33996002073468);
+  expect(output.total).toBe(3067.33996002073468);
 });
 
 test('Não deve criar um pedido se o produto tiver alguma dimensão negativa', async function () {
@@ -270,4 +270,19 @@ test('Deve criar um pedido e verificar o código de série', async function () {
   const output = await getOrder.execute(uuid);
   expect(output.code).toBe('202300000001');
   stub.restore();
+});
+
+test('Deve criar um pedido com 3 produtos com cep', async function () {
+  const uuid = crypto.randomUUID();
+  const input = {
+    uuid,
+    cpf: '407.302.170-27',
+    items: [{ idProduct: 1, quantity: 1 }],
+    from: '22060030',
+    to: '88015600',
+  };
+  const output = await checkout.execute(input);
+
+  expect(output.total).toBe(1022.4466533402449);
+  expect(output.freight).toBe(22.446653340244893);
 });

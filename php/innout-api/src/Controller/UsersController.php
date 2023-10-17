@@ -83,10 +83,12 @@ class UsersController extends AbstractController
     ]);
   }
 
-  #[Route('/{id}', name: 'app_users_delete', methods: ['POST'])]
+  #[Route('/{id}', name: 'app_users_delete', methods: ['DELETE'])]
   public function delete(Request $request, Users $user, EntityManagerInterface $entityManager): Response
   {
     $user->setEndDate(new \DateTime());
+    $entityManager->persist($user);
+    $entityManager->flush();
 
     return $this->json([
       'user' => $user

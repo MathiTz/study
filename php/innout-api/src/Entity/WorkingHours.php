@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\UsersRepository;
 use App\Repository\WorkingHoursRepository;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: WorkingHoursRepository::class)]
@@ -64,6 +66,29 @@ class WorkingHours
     return $this;
   }
 
+  public function getUserId(): ?Users
+  {
+    return $this->user_id;
+  }
+
+  public function setUserId(string $user_id, EntityManager $entityManager): static
+  {
+    $user = $entityManager->getRepository(Users::class)->find($user_id);
+    $this->user_id = $user;
+
+    return $this;
+  }
+
+  public function getNextTime(): string|null
+  {
+    if (!$this->getTime1()) return 'time1';
+    if (!$this->getTime2()) return 'time2';
+    if (!$this->getTime3()) return 'time3';
+    if (!$this->getTime4()) return 'time4';
+
+    return null;
+  }
+
   public function getTime1(): ?\DateTimeInterface
   {
     return $this->time1;
@@ -110,17 +135,5 @@ class WorkingHours
     $this->time4 = $time4;
 
     return $this;
-  }
-
-  public function getUserId(): ?Users
-  {
-      return $this->user_id;
-  }
-
-  public function setUserId(?Users $user_id): static
-  {
-      $this->user_id = $user_id;
-
-      return $this;
   }
 }

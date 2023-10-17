@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\Users;
 use App\Entity\WorkingHours;
 use App\Form\WorkingHoursType;
+use App\Repository\UsersRepository;
 use App\Repository\WorkingHoursRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,13 +35,38 @@ class WorkingHoursController extends AbstractController
   public function new(Request $request, WorkingHoursRepository $workingHoursRepository, EntityManagerInterface $entityManager): Response
   {
     $actualDate = new \DateTime();
-    $userId = $request::createFromGlobals()->get('userId');
+    $userId = $request::createFromGlobals()->get('user_id');
     $workingHour = $workingHoursRepository->findOneBy(['user_id' => $userId, 'work_date' => $actualDate]) ?: new WorkingHours();
+    $nextTime = $workingHour->getNextTime();
+    if (!$nextTime) {
+      return $this->json([
+        'error' => 'User already reached time hour for a day',
+      ]);
+    }
 
-//    if (!$workingHour->getTime1())
-//    if ($workingHour->getTime2())
-//    if ($workingHour->getTime3())
-//    if ($workingHour->getTime4())
+    if (!$workingHour->getUserId()) {
+      $workingHour->setUserId($userId, $entityManager);
+    }
+    if (!$workingHour->getWorkDate()) $workingHour->setWorkDate(new \DateTime());
+    var_dump($workingHour->getUserId());
+
+
+//    switch ($nextTime) {
+//      case $nextTime === 'time1':
+//        $workingHour->setTime1(new \DateTime());
+//        break;
+//      case $nextTime === 'time2':
+//        $workingHour->setTime2(new \DateTime());
+//        break;
+//      case $nextTime === 'time3':
+//        $workingHour->setTime3(new \DateTime());
+//        break;
+//      case $nextTime === 'time4':
+//        $workingHour->setTime4(new \DateTime());
+//        break;
+//      default:
+//        break;
+//    }
 //
 //    $entityManager->persist($workingHour);
 //    $entityManager->flush();

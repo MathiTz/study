@@ -43,6 +43,8 @@ export default class Checkout {
 
     const freightInput: FreightInput = {
       items: [],
+      from: input.from,
+      to: input.to,
     };
 
     if (input.items) {
