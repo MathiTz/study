@@ -8,6 +8,8 @@ import PgPromise from './infra/database/PgPromiseAdapter';
 import ProductRepositoryDatabase from './infra/repository/ProductRepositoryDatabase';
 import Checkout from './application/usecase/Checkout';
 import GetProducts from './application/usecase/GetProducts';
+import AuthDecorator from './application/decorator/AuthDecorator';
+import LogDecorator from './application/decorator/LogDecorator';
 
 const connection = new PgPromise();
 const httpClient = new AxiosAdapter();
@@ -24,6 +26,10 @@ const checkout = new Checkout(
 );
 
 const httpServer = new ExpressAdapter();
-new HttpController(httpServer, checkout, getProducts);
+new HttpController(
+  httpServer,
+  new AuthDecorator(new LogDecorator(checkout)),
+  new AuthDecorator(getProducts)
+);
 
 httpServer.listen(3000);

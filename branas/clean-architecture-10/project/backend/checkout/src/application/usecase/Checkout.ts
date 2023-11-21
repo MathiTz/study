@@ -12,8 +12,11 @@ import FreightGatewayHttp from '../../infra/gateway/FreightGatewayHttp';
 import AxiosAdapter from '../../infra/http/AxiosAdapter';
 import CatalogGateway from '../gateway/CatalogGateway';
 import CatalogGatewayHttp from '../../infra/gateway/CatalogGatewayHttp';
+import AuthGateway from '../gateway/AuthGateway';
+import AuthGatewayHttp from '../../infra/gateway/AuthGatewayHttp';
+import Usecase from './Usecase';
 
-export default class Checkout {
+export default class Checkout implements Usecase {
   constructor(
     readonly currencyGateway: CurrencyGateway,
     readonly productRepository: ProductRepository,
@@ -92,6 +95,7 @@ type Input = {
   coupon?: string;
   from?: string;
   to?: string;
+  token?: string;
 };
 
 type Output = {
