@@ -1,3 +1,3 @@
-module github.com/mathitz/grpc-go-course
+module github.com/mathitz/grpc-class
 
 go 1.21.1

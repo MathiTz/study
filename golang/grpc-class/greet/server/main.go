@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/mathitz/grpc-go-course"
+	pb "github.com/mathitz/grpc-class"
 )
 
 var addr string = "0.0.0.0:50051"
@@ -20,5 +20,11 @@ func main() {
 		log.Fatalf("Failed to listen on: %v\n", err)
 	}
 
-	log.Prinf("Listening on %s\n", addr)
+	log.Printf("Listening on %s\n", addr)
+
+	s := grpc.NewServer()
+
+	if err := s.Serve(list); err != nil {
+		log.Fatalf("Failed to serve: %v\n", err)
+	}
 }
