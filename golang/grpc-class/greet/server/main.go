@@ -1,10 +1,10 @@
 package main
 
 import (
+	pb "github.com/mathitz/study/golang/grpc-class/greet/proto"
+	"google.golang.org/grpc"
 	"log"
 	"net"
-
-	pb "github.com/mathitz/grpc-class"
 )
 
 var addr string = "0.0.0.0:50051"
@@ -23,8 +23,9 @@ func main() {
 	log.Printf("Listening on %s\n", addr)
 
 	s := grpc.NewServer()
+	pb.RegisterGreetServiceServer(s, &Server{})
 
-	if err := s.Serve(list); err != nil {
+	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v\n", err)
 	}
 }
