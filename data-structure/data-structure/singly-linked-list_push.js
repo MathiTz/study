@@ -16,20 +16,24 @@ class SinglyLinkedList {
   }
 
   push(val) {
-    const newNode = new Node(val);
+    var newNode = new Node(val);
 
     if (!this.head) {
       this.head = newNode;
-      this.tail = newNode;
+      this.tail = this.head;
     } else {
       this.tail.next = newNode;
       this.tail = newNode;
     }
+
+    this.length++;
+    return this;
   }
 }
 
-// var first = new Node("Hi");
-// first.next = new Node("There");
-// first.next.next = new Node("How");
-// first.next.next.next = new Node("Are");
-// first.next.next.next.next = new Node("You");
+var list = new SinglyLinkedList();
+list.push('Hi');
+list.push('YOU');
+list.push(99);
+
+console.log(list);
