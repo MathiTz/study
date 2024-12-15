@@ -1,0 +1,43 @@
+4 Pilares de OO
+
+1. Encapsulamento
+2. Herança
+3. Polimorfismo
+4. Abstração
+
+/-----------------------------/
+
+1 -> Modificadores de acesso
+
+1.1 -> Private: só a classe vê
+1.2 -> Protected: visível não só para a classe mas transmitido por herença
+1.3 -> Public: visível à todos que instanciem a classe
+
+2 -> Reuso de código
+
+Composição: (...tem um(a) )
+
+- Carro tem um motor
+- Carro têm portas
+- Casa tem uma cozinha
+
+Herança: (... é um(a) )
+
+- Civic é um carro
+- Gato é um mamífero
+- Maçã é uma fruta
+
+Super classe (+ genérica)
+Sub class (+ específica)
+
+Pode existir hierarquia sem herança
+
+3 -> Estático (Sobrecarga de métodos) e Dinâmico (precisa possuir herança)
+
+Em cima da mesma variável posso atribuir demasiados tipos
+
+ex: function estacionar(Civic $c) { ... } (tipo mais específico onde não pode haver polimorfismo)
+
+ex: function estacionar(Carro $c) { ... } (tipo mais genérico onde posso atribuir outros tipos além de carro, como por exemplo, qualquer tipo que herde carro. ie: Civic $c, Ferrari $c)
+
+4 -> Sensibilidade de entender diferentes códigos relevantes para o código
