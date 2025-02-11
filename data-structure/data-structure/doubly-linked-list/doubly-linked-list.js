@@ -1,6 +1,6 @@
 const {
   module: { Node },
-} = require('./node');
+} = require('../node');
 
 class DoublyLinkedList {
   constructor() {
