@@ -1,0 +1,2215 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TrackNote API",
+    "description": "Time tracking application with notes and reporting capabilities",
+    "version": "1.0.0",
+    "contact": {
+      "name": "TrackNote"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Users", "description": "User profile management" },
+    { "name": "Projects", "description": "Project management" },
+    { "name": "Timer", "description": "Timer operations" },
+    { "name": "Work Entries", "description": "Work entry management" },
+    { "name": "Organizations", "description": "Organization management" },
+    { "name": "Reports", "description": "Reports and analytics" },
+    { "name": "Audit", "description": "Audit logs" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "name"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "password123"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "example": "John Doe"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout user",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current authenticated user",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/users/profile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user profile with organizations and projects",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/UserProfile" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user profile",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "avatar_url": { "type": "string", "maxLength": 500 },
+                  "timezone": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "example": "America/Sao_Paulo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/users/password": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user password",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["current_password", "new_password"],
+                "properties": {
+                  "current_password": { "type": "string" },
+                  "new_password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List all projects for the authenticated user",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Project" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create a new project",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255,
+                    "example": "My Project"
+                  },
+                  "description": { "type": "string", "maxLength": 1000 },
+                  "color": {
+                    "type": "string",
+                    "maxLength": 7,
+                    "example": "#6366f1"
+                  },
+                  "organization_id": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Project" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project details",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectId" }],
+        "responses": {
+          "200": {
+            "description": "Project details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ProjectWithMembers"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update project",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "description": { "type": "string", "maxLength": 1000 },
+                  "color": { "type": "string", "maxLength": 7 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Archive project",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/projects/{id}/members": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List project members",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectId" }],
+        "responses": {
+          "200": {
+            "description": "List of members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Member" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Add member to project",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["user_id"],
+                "properties": {
+                  "user_id": { "type": "string", "format": "uuid" },
+                  "role": {
+                    "type": "string",
+                    "enum": ["member", "manager"],
+                    "default": "member"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "$ref": "#/components/responses/Created" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/projects/{id}/members/{userId}": {
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update member role",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/UserId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["member", "manager"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Remove member from project",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/UserId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/timer/current": {
+      "get": {
+        "tags": ["Timer"],
+        "summary": "Get current active timer",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current timer or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Timer" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/timer/start": {
+      "post": {
+        "tags": ["Timer"],
+        "summary": "Start a new timer",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["project_id", "title"],
+                "properties": {
+                  "project_id": { "type": "string", "format": "uuid" },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "example": "Working on feature X"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Timer started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Timer" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/timer/pause": {
+      "post": {
+        "tags": ["Timer"],
+        "summary": "Pause the current timer",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Timer paused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Timer" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/timer/resume": {
+      "post": {
+        "tags": ["Timer"],
+        "summary": "Resume the paused timer",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Timer resumed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Timer" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/timer/stop": {
+      "post": {
+        "tags": ["Timer"],
+        "summary": "Stop the current timer",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Timer stopped, returns the work entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/WorkEntry" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/timer/transition": {
+      "post": {
+        "tags": ["Timer"],
+        "summary": "Transition to a new task",
+        "description": "Atomically stops the current timer and immediately starts a new one. The current work entry is completed and a new one begins at the exact same moment.",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["project_id", "title"],
+                "properties": {
+                  "project_id": { "type": "string", "format": "uuid" },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "example": "Working on new feature"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Timer transitioned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "stopped_entry": {
+                              "$ref": "#/components/schemas/WorkEntry"
+                            },
+                            "new_timer": {
+                              "$ref": "#/components/schemas/Timer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/work-entries": {
+      "get": {
+        "tags": ["Work Entries"],
+        "summary": "List work entries",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of work entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/WorkEntry" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Work Entries"],
+        "summary": "Create a work entry (manual or start timer)",
+        "description": "Creates a work entry. If ended_at is provided, creates a completed manual entry. If ended_at is null/omitted, creates an active entry and starts the timer.",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["project_id", "title", "started_at"],
+                "properties": {
+                  "project_id": { "type": "string", "format": "uuid" },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description of the work"
+                  },
+                  "started_at": { "type": "string", "format": "date-time" },
+                  "ended_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "If null, creates an active timer"
+                  },
+                  "overlap_reason": { "type": "string", "maxLength": 500 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Work entry created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/WorkEntry" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/work-entries/{id}": {
+      "get": {
+        "tags": ["Work Entries"],
+        "summary": "Get work entry details",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "responses": {
+          "200": {
+            "description": "Work entry with blocks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/WorkEntryWithBlocks"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Work Entries"],
+        "summary": "Update work entry",
+        "description": "Updates a work entry. Setting ended_at to null will make it an active entry (starts timer).",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "project_id": { "type": "string", "format": "uuid" },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "description": { "type": "string", "nullable": true },
+                  "started_at": { "type": "string", "format": "date-time" },
+                  "ended_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "overlap_reason": { "type": "string", "maxLength": 500 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "tags": ["Work Entries"],
+        "summary": "Delete work entry",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/work-entries/{id}/blocks": {
+      "get": {
+        "tags": ["Work Entries"],
+        "summary": "List work entry blocks",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "responses": {
+          "200": {
+            "description": "List of blocks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/WorkBlock" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Work Entries"],
+        "summary": "Add block to work entry",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "notes": { "type": "string" },
+                  "block_start": { "type": "string", "format": "date-time" },
+                  "block_end": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Block created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/WorkBlock" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/work-entries/{id}/blocks/{blockId}": {
+      "put": {
+        "tags": ["Work Entries"],
+        "summary": "Update block",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkEntryId" },
+          { "$ref": "#/components/parameters/BlockId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "notes": { "type": "string" },
+                  "block_start": { "type": "string", "format": "date-time" },
+                  "block_end": { "type": "string", "format": "date-time" },
+                  "sort_order": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Work Entries"],
+        "summary": "Delete block",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkEntryId" },
+          { "$ref": "#/components/parameters/BlockId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/work-entries/{id}/history": {
+      "get": {
+        "tags": ["Work Entries"],
+        "summary": "Get work entry edit history",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/WorkEntryId" }],
+        "responses": {
+          "200": {
+            "description": "Edit history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/AuditLog" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List user's organizations",
+        "security": [{ "sessionAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of organizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Organization"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Create a new organization",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "slug": { "type": "string", "maxLength": 255 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organization created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Organization" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/organizations/{id}": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get organization details",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": {
+            "description": "Organization with members and projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrganizationWithDetails"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Organizations"],
+        "summary": "Update organization",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "logo_url": { "type": "string", "maxLength": 500 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Delete organization",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/organizations/{id}/members": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List organization members",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": {
+            "description": "List of members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Member" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Add member to organization",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["user_id"],
+                "properties": {
+                  "user_id": { "type": "string", "format": "uuid" },
+                  "role": {
+                    "type": "string",
+                    "enum": ["member", "admin"],
+                    "default": "member"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "$ref": "#/components/responses/Created" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/organizations/{id}/members/{userId}": {
+      "put": {
+        "tags": ["Organizations"],
+        "summary": "Update member role",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/UserId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["member", "admin"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Remove member from organization",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/UserId" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/organizations/{id}/invites": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List pending invites",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": {
+            "description": "List of invites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Invite" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Create invite",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "expires_in_hours": { "type": "integer", "default": 168 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invite created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Invite" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/organizations/{id}/invites/{code}": {
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Revoke invite",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/invites/{code}/accept": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Accept invite",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite accepted or auth required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Organization" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/reports/summary": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get time summary",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["day", "week", "month", "year"],
+              "default": "week"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ReportSummary" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/reports/by-project": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get time by project",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "organization_id",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time by project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ProjectReport" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/reports/by-user": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get time by user (admin only)",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time by user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/UserReport" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/reports/export": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Export data as CSV",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["csv"], "default": "csv" }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/audit-logs": {
+      "get": {
+        "tags": ["Audit"],
+        "summary": "Get audit logs",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/AuditLog" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "tracknote_session"
+      }
+    },
+    "parameters": {
+      "ProjectId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "OrganizationId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "WorkEntryId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "UserId": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "BlockId": {
+        "name": "blockId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" },
+          "data": {}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" },
+          "errors": { "type": "object" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string" },
+          "avatar_url": { "type": "string", "nullable": true },
+          "timezone": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserProfile": {
+        "allOf": [
+          { "$ref": "#/components/schemas/User" },
+          {
+            "type": "object",
+            "properties": {
+              "organizations": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Organization" }
+              },
+              "projects": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Project" }
+              }
+            }
+          }
+        ]
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "owner_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "color": { "type": "string" },
+          "archived_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "user_role": {
+            "type": "string",
+            "enum": ["owner", "manager", "member"]
+          }
+        }
+      },
+      "ProjectWithMembers": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Project" },
+          {
+            "type": "object",
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Member" }
+              }
+            }
+          }
+        ]
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "logo_url": { "type": "string", "nullable": true },
+          "owner_id": { "type": "string", "format": "uuid" },
+          "role": { "type": "string", "enum": ["admin", "member"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrganizationWithDetails": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Organization" },
+          {
+            "type": "object",
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Member" }
+              },
+              "projects": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Project" }
+              }
+            }
+          }
+        ]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "avatar_url": { "type": "string", "nullable": true },
+          "role": { "type": "string" },
+          "joined_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Invite": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email", "nullable": true },
+          "code": { "type": "string" },
+          "invited_by": { "type": "string", "format": "uuid" },
+          "invited_by_name": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Timer": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "work_entry_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["running", "paused"] },
+          "title": { "type": "string" },
+          "started_at": { "type": "string", "format": "date-time" },
+          "total_paused_seconds": { "type": "integer" },
+          "project_id": { "type": "string", "format": "uuid" },
+          "project_name": { "type": "string" },
+          "project_color": { "type": "string" },
+          "elapsed_seconds": { "type": "integer" },
+          "last_pause_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "WorkEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "project_id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "started_at": { "type": "string", "format": "date-time" },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "total_paused_seconds": { "type": "integer" },
+          "is_manual": { "type": "boolean" },
+          "overlap_reason": { "type": "string", "nullable": true },
+          "project_name": { "type": "string" },
+          "project_color": { "type": "string" },
+          "duration_seconds": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WorkEntryWithBlocks": {
+        "allOf": [
+          { "$ref": "#/components/schemas/WorkEntry" },
+          {
+            "type": "object",
+            "properties": {
+              "blocks": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/WorkBlock" }
+              }
+            }
+          }
+        ]
+      },
+      "WorkBlock": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "work_entry_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "notes": { "type": "string", "nullable": true },
+          "block_start": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "block_end": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sort_order": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "user_name": { "type": "string" },
+          "user_email": { "type": "string" },
+          "entity_type": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "action": { "type": "string" },
+          "old_values": { "type": "object", "nullable": true },
+          "new_values": { "type": "object", "nullable": true },
+          "metadata": { "type": "object", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ReportSummary": {
+        "type": "object",
+        "properties": {
+          "period": { "type": "string" },
+          "start_date": { "type": "string" },
+          "end_date": { "type": "string" },
+          "total_entries": { "type": "integer" },
+          "total_projects": { "type": "integer" },
+          "total_seconds": { "type": "integer" },
+          "total_hours": { "type": "number" },
+          "daily_breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string", "format": "date" },
+                "entries": { "type": "integer" },
+                "seconds": { "type": "integer" },
+                "hours": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "ProjectReport": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "project_id": { "type": "string", "format": "uuid" },
+                "project_name": { "type": "string" },
+                "project_color": { "type": "string" },
+                "total_entries": { "type": "integer" },
+                "total_seconds": { "type": "integer" },
+                "total_hours": { "type": "number" },
+                "percentage": { "type": "number" }
+              }
+            }
+          },
+          "total_seconds": { "type": "integer" },
+          "total_hours": { "type": "number" }
+        }
+      },
+      "UserReport": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user_id": { "type": "string", "format": "uuid" },
+                "user_name": { "type": "string" },
+                "user_email": { "type": "string" },
+                "avatar_url": { "type": "string", "nullable": true },
+                "total_entries": { "type": "integer" },
+                "total_seconds": { "type": "integer" },
+                "total_hours": { "type": "number" },
+                "percentage": { "type": "number" }
+              }
+            }
+          },
+          "total_seconds": { "type": "integer" },
+          "total_hours": { "type": "number" }
+        }
+      }
+    },
+    "responses": {
+      "Success": {
+        "description": "Operation successful",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+          }
+        }
+      },
+      "Created": {
+        "description": "Resource created",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Permission denied",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Resource conflict",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                { "$ref": "#/components/schemas/ErrorResponse" },
+                {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
