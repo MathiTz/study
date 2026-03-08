@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -57,8 +57,8 @@ model Problem {
   title         String
   slug          String   @unique
   difficulty    String   // EASY, MEDIUM, HARD
-  description   String
-  referenceData String   // JSON: requirements, entities, api, architecture, deepDives, rubric
+  description   String   @db.Text
+  referenceData String   @db.Text // JSON: requirements, entities, api, architecture, deepDives, rubric
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -83,8 +83,8 @@ model StepAttempt {
   id           String   @id @default(cuid())
   sessionId    String
   step         String   // REQUIREMENTS, CORE_ENTITIES, API_DESIGN, HIGH_LEVEL_DESIGN, DEEP_DIVES
-  userInput    String   // JSON: text content or Excalidraw scene data
-  aiEvaluation String?  // JSON: { score, feedback: { strengths, weaknesses, suggestions }, passed }
+  userInput    String   @db.Text // JSON: text content or Excalidraw scene data
+  aiEvaluation String?  @db.Text // JSON: { score, feedback: { strengths, weaknesses, suggestions }, passed }
   passed       Boolean  @default(false)
   createdAt    DateTime @default(now())
 
@@ -97,7 +97,7 @@ model KnowledgeEntry {
   id        String   @id @default(cuid())
   sourceUrl String
   title     String
-  content   String   // JSON: structured knowledge chunks
+  content   String   @db.Text // JSON: structured knowledge chunks
   tags      String   // comma-separated tags for topic matching
   createdAt DateTime @default(now())
 }
@@ -111,7 +111,7 @@ model StudyResource {
   source       String   // O'Reilly, Blog, GitHub, Paper, Documentation
   topics       String   // comma-separated tags for topic matching
   difficulty   String   // BEGINNER, INTERMEDIATE, ADVANCED
-  description  String
+  description  String   @db.Text
   resourceType String   // ARTICLE, BOOK_CHAPTER, VIDEO, DOCUMENTATION
   createdAt    DateTime @default(now())
 
